@@ -30,6 +30,7 @@ class Application(tk.Frame):
         self.inferenceRules = []
         self.reference = []
         self.variable = []
+        self.include = []
         self.grid()
         self.canvas = Canvas(self, width=800, height=600)
         self.canvas.pack()        
@@ -42,7 +43,7 @@ class Application(tk.Frame):
         menubar = Menu(self.master)
         fileMenu = Menu(menubar)
         fileMenu.add_cascade(label="New Window")
-        fileMenu.add_cascade(label="Open")
+        fileMenu.add_cascade(label="Open", command=self.openFile)
         fileMenu.add_cascade(label="Save", command=self.saveFile) # Will create a prf file.
         fileMenu.add_separator()
         fileMenu.add_command(label="Exit")
@@ -103,7 +104,35 @@ class Application(tk.Frame):
             #for j in range(0,len(step2save)):
             #   f.write(step2save[j] + "\t" + text2save[j] + "\n")
         f.write("done" + "\n")
-        f.close()        
+        f.close()   
+        
+    def openFile(self):
+        f = tkFileDialog.askopenfile(mode='r', defaultextension=".prf")
+        if f is None:
+            return
+        lines = f.readlines()
+        numL = []
+        stepL = []
+        ruleL = []
+        refL = []
+        for l in lines:
+            elem = l.split('\t')
+            if (len(elem) == 4):
+                numL.append(elem[0])
+                stepL.append(elem[1])
+                ruleL.append(elem[2])
+                refL.append(elem[3])
+        for i in range(0,len(numL)):
+            self.addLine(self.step)
+            lastS = self.stepNumber[len(self.stepNumber) - 1]
+            lastSen = self.sentence[len(self.sentence) - 1]
+            lastRef = self.reference[len(self.reference) - 1]
+            l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.cget("text"), "sad", "dsa")
+            lines.append(l)        
+            self.step += 30
+        for i in range(0,len(numL)):
+            self.sentence[i].insert("insert", stepL[i])
+        f.close()
     
     # This adds a proof line containing four components:
     # step number, sentence, inference rule, and references
@@ -127,7 +156,7 @@ class Application(tk.Frame):
         
         self.variable.append(StringVar(self))
         self.variable[len(self.variable) - 1].set("Select Rule")
-        self.inferenceRules.append(OptionMenu(self, self.variable[len(self.variable) - 1], "Assumption"))
+        self.inferenceRules.append(OptionMenu(self, self.variable[len(self.variable) - 1], "Assumption", "And Elim Left", "And Elim Right"))
         self.inferenceRules[len(self.inferenceRules) - 1].pack()
         self.inferenceRules[len(self.inferenceRules) - 1].place(x=400,y=yStart)
         #self.inferenceRules.grid(row=0, column=2, 
