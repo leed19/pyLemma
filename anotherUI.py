@@ -4,6 +4,8 @@
 # VOL 3 WHEN
 # 3/10/2017
 # Able to keep track of lines now
+# 4/3/2017
+# Began implementing add Subproof feature and add Inference rules feature
 
 from collections import namedtuple
 import Tkinter as tk
@@ -31,6 +33,7 @@ class Application(tk.Frame):
         self.reference = []
         self.variable = []
         self.include = []
+        self.rules = ["Assumption"]
         self.grid()
         self.canvas = Canvas(self, width=800, height=600)
         self.canvas.pack()        
@@ -61,18 +64,37 @@ class Application(tk.Frame):
         proofMenu.add_cascade(label="Add Step", command=self.addStep, accelerator="Ctrl+P")
         proofMenu.add_cascade(label="Delete Step")
         proofMenu.add_separator()
-        proofMenu.add_cascade(label="Add New Subproof") # This will make a new list of lines representing different subproof
+        proofMenu.add_cascade(label="Add New Subproof", command=self.addSubproof) # This will make a new list of lines representing different subproof
         proofMenu.add_cascade(label="End Subproof")
         proofMenu.add_cascade(label="Verify Proof")
         menubar.add_cascade(label="Proof", underline=0, menu=proofMenu) 
         rulesMenu=Menu(menubar)
-        rulesMenu.add_cascade(label="Add Inference Rule") # When this is added, a screen will show up, select inf rule, drop down menu will add those rules as choices.
+        rulesMenu.add_cascade(label="Add Inference Rule", command = self.addInference) # When this is added, a screen will show up, select inf rule, drop down menu will add those rules as choices.
         menubar.add_cascade(label="Rules", underline=0, menu=rulesMenu)         
         self.master.config(menu=menubar)
         
     def addInference(self):
-        return 0
+        f = tkFileDialog.askopenfile(mode='r', defaultextension=".inf")
+        if f is None:
+            return
+        lines = f.readlines()
+        inferences = []
+        prev = ""
+        for l in lines:
+            if (prev == "inference\n"):
+                l = l.replace('\n','')
+                inferences.append(l)
+                self.rules.append(l)
+            prev = l
+        for i in range(0, len(self.inferenceRules)):
+            self.inferenceRules[i] = OptionMenu(self, self.variable[len(self.variable) - 1], tuple(self.rules))
+                
         
+    def addSubproof(self):
+        self.step += 20
+        self.addStep()
+
+    
     def addStep(self):
         self.addLine(self.step)
         lastS = self.stepNumber[len(self.stepNumber) - 1]
@@ -97,12 +119,7 @@ class Application(tk.Frame):
             text2save = text2save[:len(text2save)-1]
             rule2save = v[i].get()
             refs2save = str(r[i].cget("text"))
-            # for j in range(0,len(step2save)):
             f.write(step2save + "\t" + text2save + "\t" + rule2save + "\t" + refs2save + "\n")
-            #step2save = str(n[i].cget("text")).splitlines()
-            #text2save = str(s[i].get(1.0, "end")).splitlines()
-            #for j in range(0,len(step2save)):
-            #   f.write(step2save[j] + "\t" + text2save[j] + "\n")
         f.write("done" + "\n")
         f.close()   
         
@@ -115,13 +132,18 @@ class Application(tk.Frame):
         stepL = []
         ruleL = []
         refL = []
+        prev = ""
         for l in lines:
             elem = l.split('\t')
+            print prev
+            if (prev == "proof\n"):
+                self.master.title(l)
             if (len(elem) == 4):
                 numL.append(elem[0])
                 stepL.append(elem[1])
                 ruleL.append(elem[2])
                 refL.append(elem[3])
+            prev = l
         for i in range(0,len(numL)):
             self.addLine(self.step)
             lastS = self.stepNumber[len(self.stepNumber) - 1]
@@ -156,9 +178,10 @@ class Application(tk.Frame):
         
         self.variable.append(StringVar(self))
         self.variable[len(self.variable) - 1].set("Select Rule")
-        self.inferenceRules.append(OptionMenu(self, self.variable[len(self.variable) - 1], "Assumption", "And Elim Left", "And Elim Right"))
+        self.inferenceRules.append(apply(OptionMenu, (self, self.variable[len(self.variable) - 1]) + tuple(self.rules)))
         self.inferenceRules[len(self.inferenceRules) - 1].pack()
         self.inferenceRules[len(self.inferenceRules) - 1].place(x=400,y=yStart)
+       
         #self.inferenceRules.grid(row=0, column=2, 
         #    padx=5, pady=5, sticky=N+W+E+S)
 
