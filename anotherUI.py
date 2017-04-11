@@ -12,6 +12,15 @@ import Tkinter as tk
 from Tkinter import *
 import tkFileDialog
 
+class ProofLine:
+    __slots__ = ['step', 'sentence', 'rule', 'reference', 'isNew']
+    def __init__(self, step, sentence, reference, isNew):
+        self.step = ""
+        self.sentence = ""
+        self.rule = ""
+        self.reference = ""
+        self.isNew = ""
+
 class Application(tk.Frame): 
     step = 5
     amount = 0
@@ -19,8 +28,8 @@ class Application(tk.Frame):
     global lines
     lines = []
     
-    global ProofLine 
-    ProofLine = namedtuple("ProofLine", "field1 field2 field3 field4 field5")
+    global proofLine 
+    #ProofLine = namedtuple("ProofLine", "field1 field2 field3 field4 field5")
     # create a set of structs for lines
     # Each line will have the following list of attributes:
     # line number, sentence, inference rule, reference, which proof it belongs to.
@@ -92,7 +101,15 @@ class Application(tk.Frame):
         
     def addSubproof(self):
         self.step += 20
-        self.addStep()
+        self.addLine(self.step)
+        lastS = self.stepNumber[len(self.stepNumber) - 1]
+        lastSen = self.sentence[len(self.sentence) - 1]
+        lastRef = self.reference[len(self.reference) - 1]
+        #l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.cget("text"), "sad", "dsa")
+        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.get("1.0",END), "")
+        l.isNew = "true"
+        lines.append(l)        
+        self.step += 30
 
     
     def addStep(self):
@@ -100,9 +117,11 @@ class Application(tk.Frame):
         lastS = self.stepNumber[len(self.stepNumber) - 1]
         lastSen = self.sentence[len(self.sentence) - 1]
         lastRef = self.reference[len(self.reference) - 1]
-        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.cget("text"), "sad", "dsa")
+        #l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.cget("text"), "sad", "dsa")
+        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.get("1.0",END), "")
+        l.isNew = "false"
         lines.append(l)        
-        self.step += 30    
+        self.step += 30
         
     def saveFile(self):
         n = self.stepNumber
@@ -118,10 +137,14 @@ class Application(tk.Frame):
             text2save = str(s[i].get(1.0, "end"))# str(s[i].get(1.0, "end")).splitlines()
             text2save = text2save[:len(text2save)-1]
             rule2save = v[i].get()
-            refs2save = str(r[i].cget("text"))
-            f.write(step2save + "\t" + text2save + "\t" + rule2save + "\t" + refs2save + "\n")
+            refs2save = str(r[i].get(1.0, "end"))
+            f.write(step2save + "\t" + text2save + "\t" + rule2save + "\t" + refs2save)
+            lines[i].step = step2save
+            lines[i].sentence = text2save
+            lines[i].rule = rule2save
+            lines[i].reference = refs2save
         f.write("done" + "\n")
-        f.close()   
+        f.close()
         
     def openFile(self):
         f = tkFileDialog.askopenfile(mode='r', defaultextension=".prf")
@@ -135,7 +158,6 @@ class Application(tk.Frame):
         prev = ""
         for l in lines:
             elem = l.split('\t')
-            print prev
             if (prev == "proof\n"):
                 self.master.title(l)
             if (len(elem) == 4):
@@ -186,7 +208,8 @@ class Application(tk.Frame):
         #    padx=5, pady=5, sticky=N+W+E+S)
 
         ref = StringVar(self)
-        self.reference.append(tk.Label(self, width=5, height=1, padx=5,pady=5,textvariable = ref))
+        #self.reference.append(tk.Label(self, width=5, height=1, padx=5,pady=5,textvariable = ref))
+        self.reference.append(Text(self, width=5, height=1, padx=5, pady=5))
         self.reference[len(self.reference) - 1].pack()
         self.reference[len(self.reference) - 1].place(x=600,y=yStart)
         ref.set("Test")
