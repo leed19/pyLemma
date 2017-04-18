@@ -6,6 +6,8 @@
 # Able to keep track of lines now
 # 4/3/2017
 # Began implementing add Subproof feature and add Inference rules feature
+# 4/16/2017
+# Began implementing deleteStep feature
 
 from collections import namedtuple
 import Tkinter as tk
@@ -14,11 +16,12 @@ import tkFileDialog
 
 class ProofLine:
     __slots__ = ['step', 'sentence', 'rule', 'reference', 'isNew']
-    def __init__(self, step, sentence, reference, isNew):
+    def __init__(self, step, sentence, reference, inference, isNew):
         self.step = ""
         self.sentence = ""
         self.rule = ""
         self.reference = ""
+        self.inference = ""
         self.isNew = ""
 
 class Application(tk.Frame): 
@@ -71,7 +74,7 @@ class Application(tk.Frame):
         proofMenu = Menu(menubar)
         proofMenu.add_cascade(label="Add Premise")
         proofMenu.add_cascade(label="Add Step", command=self.addStep, accelerator="Ctrl+P")
-        proofMenu.add_cascade(label="Delete Step")
+        proofMenu.add_cascade(label="Delete Last Step", command=self.deleteStep)
         proofMenu.add_separator()
         proofMenu.add_cascade(label="Add New Subproof", command=self.addSubproof) # This will make a new list of lines representing different subproof
         proofMenu.add_cascade(label="End Subproof")
@@ -105,8 +108,9 @@ class Application(tk.Frame):
         lastS = self.stepNumber[len(self.stepNumber) - 1]
         lastSen = self.sentence[len(self.sentence) - 1]
         lastRef = self.reference[len(self.reference) - 1]
+        lastInf = self.inferenceRules[len(self.inferenceRules) - 1]
         #l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.cget("text"), "sad", "dsa")
-        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.get("1.0",END), "")
+        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.get("1.0",END), lastInf.cget("text"), "")
         l.isNew = "true"
         lines.append(l)        
         self.step += 30
@@ -117,11 +121,24 @@ class Application(tk.Frame):
         lastS = self.stepNumber[len(self.stepNumber) - 1]
         lastSen = self.sentence[len(self.sentence) - 1]
         lastRef = self.reference[len(self.reference) - 1]
+        lastInf = self.inferenceRules[len(self.inferenceRules) - 1]
         #l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.cget("text"), "sad", "dsa")
-        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.get("1.0",END), "")
+        l = ProofLine(lastS.cget("text"), lastSen.get("1.0",END), lastRef.get("1.0",END), lastInf.cget("text"), "")
         l.isNew = "false"
         lines.append(l)        
         self.step += 30
+        
+    def deleteStep(self):
+        self.stepNumber[len(self.stepNumber) - 1].destroy()
+        self.reference[len(self.reference) - 1].destroy()
+        self.sentence[len(self.sentence) - 1].destroy()
+        self.inferenceRules[len(self.inferenceRules) - 1].destroy()
+        self.stepNumber.pop()
+        self.reference.pop()
+        self.sentence.pop()
+        self.inferenceRules.pop()        
+        self.step -= 30
+        self.amount -= 1
         
     def saveFile(self):
         n = self.stepNumber
@@ -133,6 +150,8 @@ class Application(tk.Frame):
             return
         f.write("proof" + "\n")
         for i in range(0,len(n)):
+            if lines[i].isNew == "true":
+                f.write("done\n" + "\n" + "proof\n")            
             step2save = str(n[i].cget("text"))# str(n[i].cget("text")).splitlines()
             text2save = str(s[i].get(1.0, "end"))# str(s[i].get(1.0, "end")).splitlines()
             text2save = text2save[:len(text2save)-1]
